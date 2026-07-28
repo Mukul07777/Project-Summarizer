@@ -13,8 +13,8 @@ const formatBytes = (bytes, decimals = 2) => {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 };
 
-const FileDetailsPanel = ({ fileData, onClose, apiKey }) => {
-  const [details, setDetails] = useState({ code: '', symbols: [] });
+const FileDetailsPanel = ({ fileData, onClose, apiKey, onDependenciesFound }) => {
+  const [details, setDetails] = useState({ code: '', symbols: [], imports: [] });
   const [loading, setLoading] = useState(false);
   
   const [aiSummary, setAiSummary] = useState(null);
@@ -28,6 +28,7 @@ const FileDetailsPanel = ({ fileData, onClose, apiKey }) => {
       parseFileContent(fileData.handle, fileData.extension).then(res => {
         setDetails(res);
         setLoading(false);
+        if (onDependenciesFound) onDependenciesFound(res.imports || []);
         
         // Auto-summarize if API key exists
         if (apiKey && res.code) {

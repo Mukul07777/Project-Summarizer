@@ -53,5 +53,18 @@ function extractSymbols(code, extension) {
   
   uniqueSymbols.sort((a, b) => a.name.localeCompare(b.name));
   
-  return { code, symbols: uniqueSymbols };
+  // Extract imports
+  const imports = [];
+  const importRegex = /import\s+.*?\s+from\s+['"]([^'"]+)['"]/g;
+  const requireRegex = /require\(['"]([^'"]+)['"]\)/g;
+  
+  let matchImport;
+  while ((matchImport = importRegex.exec(code)) !== null) {
+    imports.push(matchImport[1]);
+  }
+  while ((matchImport = requireRegex.exec(code)) !== null) {
+    imports.push(matchImport[1]);
+  }
+  
+  return { code, symbols: uniqueSymbols, imports };
 }

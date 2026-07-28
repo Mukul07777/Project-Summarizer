@@ -14,6 +14,8 @@ function App() {
   const [projectMetadata, setProjectMetadata] = useState(null);
   const [aiProjectSummary, setAiProjectSummary] = useState(null);
   const [isSummarizing, setIsSummarizing] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeDependencies, setActiveDependencies] = useState([]);
 
   const handleApiKeyChange = (key) => {
     setApiKey(key);
@@ -26,6 +28,7 @@ function App() {
       const parsedTree = await parseDirectory(dirHandle);
       const layoutTree = buildCityLayout(parsedTree);
       setTree(layoutTree);
+      setSearchQuery('');
       
       // Try to find a package.json or README.md to summarize the project
       let metadataStr = '';
@@ -72,16 +75,24 @@ function App() {
 
   const handleFileClick = (fileData) => {
     setSelectedFile(fileData);
+    setActiveDependencies([]); // Reset until parsed
   };
 
   const closePanel = () => {
     setSelectedFile(null);
+    setActiveDependencies([]);
   };
 
   return (
     <div className="app-container">
       <div className="canvas-wrapper">
-        <Cityscape tree={tree} onFileClick={handleFileClick} />
+        <Cityscape 
+          tree={tree} 
+          onFileClick={handleFileClick} 
+          searchQuery={searchQuery} 
+          selectedFile={selectedFile}
+          activeDependencies={activeDependencies}
+        />
       </div>
       
       <UIOverlay 
@@ -91,12 +102,15 @@ function App() {
         isSummarizing={isSummarizing}
         apiKey={apiKey}
         onApiKeyChange={handleApiKeyChange}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
       />
       
       <FileDetailsPanel 
         fileData={selectedFile} 
         onClose={closePanel} 
         apiKey={apiKey} 
+        onDependenciesFound={setActiveDependencies}
       />
     </div>
   );

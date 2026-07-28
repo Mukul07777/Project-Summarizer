@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FolderOpen, Code2, Database, Settings } from 'lucide-react';
+import { FolderOpen, Code2, Database, Settings, Search } from 'lucide-react';
 import './UIOverlay.css';
 
 const formatBytes = (bytes, decimals = 2) => {
@@ -11,7 +11,7 @@ const formatBytes = (bytes, decimals = 2) => {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 };
 
-const UIOverlay = ({ onSelectFolder, tree, projectSummary, isSummarizing, apiKey, onApiKeyChange }) => {
+const UIOverlay = ({ onSelectFolder, tree, projectSummary, isSummarizing, apiKey, onApiKeyChange, searchQuery, onSearchChange }) => {
   const [showSettings, setShowSettings] = useState(false);
   const totalFiles = tree ? countFiles(tree) : 0;
   
@@ -86,14 +86,35 @@ const UIOverlay = ({ onSelectFolder, tree, projectSummary, isSummarizing, apiKey
                 <p>Explore your codebase in 3D</p>
               )}
 
-              <div className="stats">
-                <button className="btn-primary" onClick={onSelectFolder}>
+              <div className="stats" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <button className="btn-primary" onClick={onSelectFolder} style={{ width: 'fit-content' }}>
                   <FolderOpen size={20} />
                   Select Local Folder
                 </button>
                 
                 {tree && (
-                  <>
+                  <div style={{ position: 'relative', width: '100%', maxWidth: '300px' }}>
+                    <Search size={18} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#a0a0b0' }} />
+                    <input 
+                      type="text" 
+                      placeholder="Search files..." 
+                      value={searchQuery}
+                      onChange={(e) => onSearchChange(e.target.value)}
+                      style={{ 
+                        width: '100%', 
+                        padding: '0.6rem 0.6rem 0.6rem 2.5rem', 
+                        borderRadius: '8px', 
+                        border: '1px solid #4a4a6a', 
+                        background: 'rgba(0,0,0,0.4)', 
+                        color: '#fff',
+                        outline: 'none'
+                      }}
+                    />
+                  </div>
+                )}
+                
+                {tree && (
+                  <div style={{ display: 'flex', gap: '2rem', marginTop: '0.5rem' }}>
                     <div className="stat-item">
                       <Code2 className="stat-icon" size={24} />
                       <div className="stat-info">
@@ -108,7 +129,7 @@ const UIOverlay = ({ onSelectFolder, tree, projectSummary, isSummarizing, apiKey
                         <strong>{formatBytes(tree.size)}</strong>
                       </div>
                     </div>
-                  </>
+                  </div>
                 )}
               </div>
             </div>
