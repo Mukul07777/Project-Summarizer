@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useContext } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, Stars, Text, Edges, QuadraticBezierLine, CameraControls } from '@react-three/drei';
+import { EffectComposer, Bloom } from '@react-three/postprocessing';
 import * as THREE from 'three';
 
 const BuildingRegistryContext = React.createContext(null);
@@ -240,15 +241,16 @@ const Cityscape = ({ tree, onFileClick, searchQuery, selectedFile, activeDepende
   if (!tree) return null;
 
   return (
-    <div style={{ width: '100vw', height: '100vh', background: '#050510' }}>
+    <div style={{ width: '100vw', height: '100vh', background: '#020205' }}>
       <Canvas camera={{ position: [15, 15, 15], fov: 50 }}>
-        <color attach="background" args={['#050510']} />
+        <color attach="background" args={['#020205']} />
+        <fog attach="fog" args={['#020205', 20, 70]} />
         <Stars radius={100} depth={50} count={5000} factor={4} saturation={0} fade speed={1} />
         
-        <ambientLight intensity={1.5} />
-        <pointLight position={[10, 10, 10]} intensity={2.5} color="#ff00aa" />
-        <pointLight position={[-10, 10, -10]} intensity={2.5} color="#00aaff" />
-        <directionalLight position={[0, 10, 5]} intensity={2} />
+        <ambientLight intensity={1.0} />
+        <pointLight position={[10, 20, 10]} intensity={2.0} color="#ff00aa" />
+        <pointLight position={[-10, 20, -10]} intensity={2.0} color="#00aaff" />
+        <directionalLight position={[0, 10, 5]} intensity={1.5} />
         
         <BuildingRegistryContext.Provider value={registry}>
           <group position={[-5, 0, -5]}>
@@ -256,6 +258,10 @@ const Cityscape = ({ tree, onFileClick, searchQuery, selectedFile, activeDepende
           </group>
           <DependencyLines selectedFile={selectedFile} activeDependencies={activeDependencies} />
         </BuildingRegistryContext.Provider>
+        
+        <EffectComposer disableNormalPass>
+          <Bloom luminanceThreshold={0.5} mipmapBlur intensity={1.2} />
+        </EffectComposer>
         
         <CameraControls ref={cameraControlsRef} makeDefault />
       </Canvas>
