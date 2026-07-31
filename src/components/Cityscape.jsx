@@ -97,7 +97,7 @@ const DependencyLines = ({ selectedFile, activeDependencies }) => {
   );
 };
 
-const Building = ({ data, position, onFileClick, searchQuery }) => {
+const Building = ({ data, position, onFileClick, searchQuery, aiHighlightedFiles }) => {
   const [hovered, setHovered] = useState(false);
   const ref = useRef();
   const registry = useContext(BuildingRegistryContext);
@@ -106,7 +106,9 @@ const Building = ({ data, position, onFileClick, searchQuery }) => {
   const height = Math.max(0.5, Math.log10(data.size || 10) * 0.5); 
   
   const isSearchMatch = searchQuery && data.name.toLowerCase().includes(searchQuery.toLowerCase());
-  const isDimmed = searchQuery && !isSearchMatch;
+  const isAiMatch = aiHighlightedFiles && aiHighlightedFiles.includes(data.path);
+  
+  const isDimmed = (searchQuery && !isSearchMatch) || (aiHighlightedFiles && aiHighlightedFiles.length > 0 && !isAiMatch);
 
   useEffect(() => {
     if (registry && registry.current && ref.current) {
@@ -118,6 +120,9 @@ const Building = ({ data, position, onFileClick, searchQuery }) => {
       }
     };
   }, [data.path, registry]);
+
+  const finalColor = isAiMatch ? '#ffaa00' : isSearchMatch ? '#00ffaa' : hovered ? '#ffffff' : color;
+  const emissiveIntensity = isAiMatch ? 3 : isSearchMatch ? 2 : hovered ? 0.8 : isDimmed ? 0.1 : 0.5;
 
   return (
     <group position={position} ref={ref}>
@@ -133,15 +138,15 @@ const Building = ({ data, position, onFileClick, searchQuery }) => {
       >
         <boxGeometry args={[1, height, 1]} />
         <meshStandardMaterial 
-          color={isSearchMatch ? '#00ffaa' : hovered ? '#ffffff' : color} 
-          emissive={isSearchMatch ? '#00ffaa' : color}
-          emissiveIntensity={isSearchMatch ? 2 : hovered ? 0.8 : isDimmed ? 0.1 : 0.5}
-          opacity={isDimmed ? 0.3 : 1}
+          color={finalColor} 
+          emissive={finalColor}
+          emissiveIntensity={emissiveIntensity}
+          opacity={isDimmed ? 0.2 : 1}
           transparent={isDimmed}
           roughness={0.2} 
           metalness={0.1} 
         />
-        <Edges scale={1} threshold={15} color={isSearchMatch ? '#ffffff' : hovered ? '#ffffff' : '#000000'} />
+        <Edges scale={1} threshold={15} color={isAiMatch || isSearchMatch || hovered ? '#ffffff' : '#000000'} />
       </mesh>
       {hovered && (
         <Text
@@ -158,7 +163,7 @@ const Building = ({ data, position, onFileClick, searchQuery }) => {
   );
 };
 
-const District = ({ data, position, level = 0, onFileClick, searchQuery }) => {
+const District = ({ data, position, level = 0, onFileClick, searchQuery, aiHighlightedFiles }) => {
   const items = data.children || [];
   const count = items.length;
   const cols = Math.ceil(Math.sqrt(count));
@@ -191,16 +196,16 @@ const District = ({ data, position, level = 0, onFileClick, searchQuery }) => {
         const z = Math.floor(i / cols) * spacing;
         
         if (child.type === 'file') {
-          return <Building key={child.path} data={child} position={[x, 0, z]} onFileClick={onFileClick} searchQuery={searchQuery} />;
+          return <Building key={child.path} data={child} position={[x, 0, z]} onFileClick={onFileClick} searchQuery={searchQuery} aiHighlightedFiles={aiHighlightedFiles} />;
         } else {
-          return <District key={child.path} data={child} position={[x, 0, z]} level={level + 1} onFileClick={onFileClick} searchQuery={searchQuery} />;
+          return <District key={child.path} data={child} position={[x, 0, z]} level={level + 1} onFileClick={onFileClick} searchQuery={searchQuery} aiHighlightedFiles={aiHighlightedFiles} />;
         }
       })}
     </group>
   );
 };
 
-const Cityscape = ({ tree, onFileClick, searchQuery, selectedFile, activeDependencies }) => {
+const Cityscape = ({ tree, onFileClick, searchQuery, selectedFile, activeDependencies, aiHighlightedFiles }) => {
   const registry = useRef(new Map());
 
   if (!tree) return null;
@@ -218,7 +223,7 @@ const Cityscape = ({ tree, onFileClick, searchQuery, selectedFile, activeDepende
         
         <BuildingRegistryContext.Provider value={registry}>
           <group position={[-5, 0, -5]}>
-            <District data={tree} position={[0, 0, 0]} onFileClick={onFileClick} searchQuery={searchQuery} />
+            <District data={tree} position={[0, 0, 0]} onFileClick={onFileClick} searchQuery={searchQuery} aiHighlightedFiles={aiHighlightedFiles} />
           </group>
           <DependencyLines selectedFile={selectedFile} activeDependencies={activeDependencies} />
         </BuildingRegistryContext.Provider>

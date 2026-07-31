@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FolderOpen, Code2, Database, Settings, Search } from 'lucide-react';
+import { FolderOpen, Code2, Database, Settings, Search, MessageSquare, Send } from 'lucide-react';
 import './UIOverlay.css';
 
 const formatBytes = (bytes, decimals = 2) => {
@@ -11,8 +11,9 @@ const formatBytes = (bytes, decimals = 2) => {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 };
 
-const UIOverlay = ({ onSelectFolder, tree, projectSummary, isSummarizing, apiKey, onApiKeyChange, searchQuery, onSearchChange }) => {
+const UIOverlay = ({ onSelectFolder, tree, projectSummary, isSummarizing, apiKey, onApiKeyChange, searchQuery, onSearchChange, onSpatialChat, aiChatResponse, isAiThinking }) => {
   const [showSettings, setShowSettings] = useState(false);
+  const [chatQuery, setChatQuery] = useState('');
   const totalFiles = tree ? countFiles(tree) : 0;
   
   function countFiles(node) {
@@ -148,6 +149,47 @@ const UIOverlay = ({ onSelectFolder, tree, projectSummary, isSummarizing, apiKey
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* Spatial Architect Chat UI */}
+      {!showSettings && apiKey && tree && (
+        <div className="glass-panel" style={{ position: 'absolute', bottom: '2rem', right: '2rem', width: '350px', display: 'flex', flexDirection: 'column', gap: '1rem', background: 'rgba(5, 5, 16, 0.8)' }}>
+          <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#ffaa00' }}>
+            <MessageSquare size={18} /> The Spatial Architect
+          </h3>
+          
+          <div style={{ flex: 1, minHeight: '60px', maxHeight: '150px', overflowY: 'auto', fontSize: '0.9rem', color: '#d4d4d4' }}>
+            {isAiThinking ? (
+              <span style={{ fontStyle: 'italic', color: '#a0a0b0' }}>Analyzing the city...</span>
+            ) : aiChatResponse ? (
+              aiChatResponse
+            ) : (
+              <span style={{ color: '#a0a0b0' }}>Ask a question to locate specific logic in the city. e.g. "Where is the authentication handled?"</span>
+            )}
+          </div>
+
+          <form 
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (chatQuery.trim()) {
+                onSpatialChat(chatQuery);
+                setChatQuery('');
+              }
+            }}
+            style={{ display: 'flex', gap: '0.5rem' }}
+          >
+            <input 
+              type="text" 
+              placeholder="Ask the architect..." 
+              value={chatQuery}
+              onChange={(e) => setChatQuery(e.target.value)}
+              style={{ flex: 1, padding: '0.5rem 0.8rem', borderRadius: '8px', border: '1px solid #4a4a6a', background: 'rgba(0,0,0,0.5)', color: '#fff', outline: 'none' }}
+            />
+            <button type="submit" disabled={isAiThinking} className="btn-primary" style={{ padding: '0.5rem' }}>
+              <Send size={16} />
+            </button>
+          </form>
         </div>
       )}
     </div>

@@ -3,7 +3,7 @@ import Cityscape from './components/Cityscape';
 import UIOverlay from './components/UIOverlay';
 import FileDetailsPanel from './components/FileDetailsPanel';
 import { parseDirectory, buildCityLayout } from './core/CodeParser';
-import { summarizeProject } from './core/AISummarizer';
+import { summarizeProject, askSpatialArchitect } from './core/AISummarizer';
 import './App.css';
 
 function App() {
@@ -16,6 +16,10 @@ function App() {
   const [isSummarizing, setIsSummarizing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeDependencies, setActiveDependencies] = useState([]);
+  
+  const [aiHighlightedFiles, setAiHighlightedFiles] = useState([]);
+  const [aiChatResponse, setAiChatResponse] = useState('');
+  const [isAiThinking, setIsAiThinking] = useState(false);
 
   const handleApiKeyChange = (key) => {
     setApiKey(key);
@@ -73,6 +77,25 @@ function App() {
     }
   }, [apiKey, projectMetadata]);
 
+  const handleSpatialChat = async (query) => {
+    if (!tree) return;
+    setIsAiThinking(true);
+    setAiChatResponse('');
+    setAiHighlightedFiles([]);
+
+    const filePaths = [];
+    const getPaths = (node) => {
+      if (node.type === 'file') filePaths.push(node.path);
+      if (node.children) node.children.forEach(getPaths);
+    };
+    getPaths(tree);
+
+    const res = await askSpatialArchitect(query, filePaths, apiKey);
+    setAiChatResponse(res.answer);
+    setAiHighlightedFiles(res.paths || []);
+    setIsAiThinking(false);
+  };
+
   const handleFileClick = (fileData) => {
     setSelectedFile(fileData);
     setActiveDependencies([]); // Reset until parsed
@@ -92,6 +115,7 @@ function App() {
           searchQuery={searchQuery} 
           selectedFile={selectedFile}
           activeDependencies={activeDependencies}
+          aiHighlightedFiles={aiHighlightedFiles}
         />
       </div>
       
@@ -104,6 +128,9 @@ function App() {
         onApiKeyChange={handleApiKeyChange}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
+        onSpatialChat={handleSpatialChat}
+        aiChatResponse={aiChatResponse}
+        isAiThinking={isAiThinking}
       />
       
       <FileDetailsPanel 
