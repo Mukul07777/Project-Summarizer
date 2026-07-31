@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useContext } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls, Stars, Text, Edges, QuadraticBezierLine } from '@react-three/drei';
+import { OrbitControls, Stars, Text, Edges, QuadraticBezierLine, CameraControls } from '@react-three/drei';
 import * as THREE from 'three';
 
 const BuildingRegistryContext = React.createContext(null);
@@ -207,6 +207,35 @@ const District = ({ data, position, level = 0, onFileClick, searchQuery, aiHighl
 
 const Cityscape = ({ tree, onFileClick, searchQuery, selectedFile, activeDependencies, aiHighlightedFiles }) => {
   const registry = useRef(new Map());
+  const cameraControlsRef = useRef();
+
+  useEffect(() => {
+    if (aiHighlightedFiles && aiHighlightedFiles.length > 0 && registry.current && cameraControlsRef.current) {
+      const center = new THREE.Vector3();
+      let count = 0;
+      
+      aiHighlightedFiles.forEach(path => {
+        const ref = registry.current.get(path);
+        if (ref) {
+          const pos = new THREE.Vector3();
+          ref.getWorldPosition(pos);
+          center.add(pos);
+          count++;
+        }
+      });
+      
+      if (count > 0) {
+        center.divideScalar(count);
+        // Position camera diagonally up and away from the center of matches
+        const camPos = center.clone().add(new THREE.Vector3(5, 8, 8));
+        cameraControlsRef.current.setLookAt(
+          camPos.x, camPos.y, camPos.z, // Position
+          center.x, center.y, center.z, // Target
+          true // Smooth animation
+        );
+      }
+    }
+  }, [aiHighlightedFiles]);
 
   if (!tree) return null;
 
@@ -228,7 +257,7 @@ const Cityscape = ({ tree, onFileClick, searchQuery, selectedFile, activeDepende
           <DependencyLines selectedFile={selectedFile} activeDependencies={activeDependencies} />
         </BuildingRegistryContext.Provider>
         
-        <OrbitControls makeDefault />
+        <CameraControls ref={cameraControlsRef} makeDefault />
       </Canvas>
     </div>
   );
